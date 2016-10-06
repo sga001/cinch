@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+
+require 'socket'
+
+
+def not_matches(chunk, word)
+
+  if chunk.size < word.size
+    puts "End of log."
+    exit(0)
+  end
+
+  (0...word.size).each do |i|
+    if chunk[i] != word[i]
+      return true
+    end
+  end
+
+  return false
+
+end
+
+def find_len(log, off)
+  trigger = "[End Cinch log]"
+
+  new_off = off
+
+  while not_matches(log.read(trigger.size), trigger)
+    new_off += 1
+    log.seek(new_off, IO::SEEK_SET)
+  end
+
+  return new_off - off
+end
+
+def process_blue(blue, red, log, off, len)
+  puts "Sending blue message: Off #{off}, len #{len}"
+  log.seek(off)
+  blue.write(log.read(len))
+#  red.read
+  return off + len
+end
+
+def process_red(blue, red, log, off, len)
+  puts "Sending red message: Off #{off}, len #{len}"
+  log.seek(off)
+  red.write(log.read(len))
+#  blue.read
+  return off + len
+end
+
+def process_first_red(blue, red, log, off, len)
+  puts "Sending first red message: Off #{off}, len #{len}"
+
+  if len < 16
+    puts "Error: lenth less than 12"
+    exit(-1)
+  end
+
+  log.seek(off)
+  red.write(log.read(12))
+  log.seek(off+16)
+  red.write(log.read(len - 16))
+#  blue.read
+  return off + len
+end
+
+def process_first_blue(blue, red, log, off, len)
+
+  puts "Sending first blue message: Off #{off}, len #{len}"
+
+  if len < 16
+    puts "Error: length less than 12"
+    exit(-1)
+  end
+
+  log.seek(off)
+  blue.write(log.read(12))
+  log.seek(off+16)
+  blue.write(log.read(len - 16))
+#  red.read
+  return off + len
+end
+
+log = File.new("#{ARGV[0]}")
+
+red_socket = TCPServer.new 8000 
+blue = TCPSocket.new 'localhost', 5555
+
+red = red_socket.accept
+
+
+trigger = "Machine]"
+off = 0
+first_packet_red = true
+first_packet_blue = true
+
+
+while !log.eof? do
+
+  while not_matches(log.read(trigger.size), trigger)
+    off += 1
+    log.seek(off, IO::SEEK_SET)
+  end
+
+  log.seek(off - 4, IO::SEEK_SET)
+  source = log.read(4)
+  off += 8
+
+  if source.include?("Blue")
+
+    len = find_len(log, off)
+
+    if first_packet_blue
+      off = process_first_blue(blue, red, log, off, len)
+      first_packet_blue = false
+    else
+      off = process_blue(blue, red, log, off, len)
+    end
+
+  elsif source.include?("Red")
+
+    len = find_len(log, off)
+
+    if first_packet_red
+      off = process_first_red(blue, red, log, off, len)
+      first_packet_red = false
+    else
+      off = process_red(blue, red, log, off, len)
+    end
+
+  else
+    puts "Something went awry"
+    exit(-1)
+  end
+
+  log.seek(off, IO::SEEK_SET)
+  sleep 0.05
+#  STDIN.read(1)
+end

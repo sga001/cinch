@@ -1,0 +1,54 @@
+#!/bin/bash
+
+QEMU_IP="127.0.0.1"
+QEMU_PORT="1234"
+
+CINCH_IP="192.168.1.7"
+CINCH_PORT="5555"
+
+SOCKET_CMD="chardev-add socket,id=usbrdsocket,host=$CINCH_IP,port=$CINCH_PORT"
+DEVICE_CMD="device_add usb-redir,chardev=usbrdsocket,id=redir0"
+
+
+case "$1" in
+    start)
+        {
+            echo "$SOCKET_CMD"
+            sleep 1
+            echo "$DEVICE_CMD"
+            sleep 1
+            echo exit
+        } | telnet $QEMU_IP $QEMU_PORT 2>/dev/null | grep "device_add\|chardev-add"
+
+        ;;
+    
+    stop)
+        {
+            echo "device_del redir0"
+            sleep 1
+            echo "chardev-remove usbrdsocket"  
+            sleep 1
+            echo exit
+        } | telnet $QEMU_IP $QEMU_PORT 2>/dev/null | grep "device_del\|Chardev\|chardev-remove"
+        ;;
+
+    ls)
+        echo "lsusb" | ssh -T red 2>/dev/null | grep "Bus"
+        ;;
+
+    export)
+        echo "screen -S usb -d -m usbredirserver -p 8000 $2" | ssh -T red &>/dev/null
+        echo "screen -ls" | ssh -T red 2>/dev/null | grep "No\|usb" | \
+        sed 's/No.*/Could not connect to device/' | sed "s/.*usb.*/Exporting device id $2/" 
+        ;;
+    
+    cancel)
+      echo "pkill usbredir" | ssh -t red &>/dev/null
+      ;;
+
+    *)
+        echo "Usage: $0 <start | stop | ls | export <id> | cancel >"
+	;;
+esac
+
+exit 0;

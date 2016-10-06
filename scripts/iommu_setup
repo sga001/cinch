@@ -1,0 +1,38 @@
+#!/bin/bash
+
+WANTDEVICE="0000:00:14.0"
+WANTDEVID="8086 8cb1"
+WANTDEVSHORT="00:14.0"
+
+unbinddev()
+{
+    if [ -f "/sys/bus/pci/devices/${WANTDEVICE}/driver/unbind" ]; then
+    	echo "$WANTDEVICE" > /sys/bus/pci/devices/${WANTDEVICE}/driver/unbind
+    fi
+}
+
+binddev()
+{
+    echo "$WANTDEVICE" > /sys/bus/pci/drivers/$1/bind
+    echo "$WANTDEVID" > /sys/bus/pci/drivers/$1/new_id
+}
+	
+case "$1" in
+    start)
+        modprobe pci_stub
+    
+        unbinddev
+        binddev "pci-stub"
+        ;;
+    
+    stop)
+        unbinddev
+        binddev "xhci_hcd"
+        ;;
+
+    *)
+        echo "Usage: $0 <start|stop>"
+	;;
+esac
+
+exit 0;

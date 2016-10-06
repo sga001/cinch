@@ -1,0 +1,28 @@
+{
+  "ids" : [ 
+    {
+      "vendor_id" : 1477,
+      "product_id" : 2
+    },
+
+    {
+      "vendor_id" : 1477,
+      "product_id" : 4
+    }
+ 
+  ],
+  
+  "constraints" : [
+    {
+      "id" : 0,
+      "desc_type" : "interface",
+      "field_checks" : [
+        {
+          "field" : "num_endpoints",
+          "operation" : "eq",
+          "value" : 1
+        }
+      ]
+    }
+  ]
+}

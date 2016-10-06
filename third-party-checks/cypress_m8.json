@@ -1,0 +1,79 @@
+{
+  "ids" : [
+    {
+      "vendor_id" : 4451,
+      "product_id" : 256
+    },
+
+    {
+      "vendor_id" : 4451,
+      "product_id" : 512
+    },
+
+    {
+      "vendor_id" : 1204,
+      "product_id" : 21760
+    },
+
+    {
+      "vendor_id" : 26423,
+      "product_id" : 1
+    },
+
+    {
+      "vendor_id" : 3487,
+      "product_id" : 2
+    },
+
+    {
+      "vendor_id" : 2000,
+      "product_id" : 16641
+    }
+  ],
+  
+  "constraints" : [
+    {
+      "id" : 0,
+      "desc_type" : "endpoint",
+      "field_checks" : [
+
+        {
+          "field" : "endpoint_address", 
+          "operation" : "bit_is_set",
+          "value" : 7
+        },
+
+        {
+          "field" : "attributes",
+          "operation" : "and",
+          "value" : 3
+        }
+
+      ],
+
+      "count" : 1 
+    },
+
+    {
+      "id" : 1,
+      "desc_type" : "endpoint",
+      "field_checks" : [
+
+        {
+          "field" : "endpoint_address", 
+          "operation" : "bit_not_set",
+          "value" : 7
+        },
+
+        {
+          "field" : "attributes",
+          "operation" : "and",
+          "value" : 3
+        }
+
+      ],
+
+      "count" : 1
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "ids" : [
+    {
+      "vendor_id" : 1154,
+      "product_id" : 515
+    }
+  ],
+  
+  "constraints" : [
+    {
+      "id" : 0,
+      "desc_type" : "interface",
+      "field_checks" : [
+        {
+          "field" : "num_endpoints", 
+          "operation" : "geq",
+          "value" : 1
+        }
+      ],
+
+      "count" : 2 
+    }
+  ]
+}

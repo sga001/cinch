@@ -1,0 +1,215 @@
+#!/usr/bin/env ruby
+
+require 'socket'
+
+$header_type = {}
+$header_type[0] = "Hello"
+$header_type[1] = "Device Connect"
+$header_type[2] = "Device Disconnect"
+$header_type[3] = "Reset"
+$header_type[4] = "Interface Info"
+$header_type[5] = "Ep info"
+$header_type[6] = "Set Configuration"
+$header_type[7] = "Get Configuration"
+$header_type[8] = "Config Status"
+$header_type[9] = "Set Alt Setting"
+$header_type[10] = "Get Alt Setting"
+$header_type[11] = "Alt Setting Status"
+$header_type[100] = "Control Packet"
+$header_type[101] = "Bulk Packet"
+$header_type[102] = "Iso Packet"
+$header_type[103] = "Int Packet"
+$header_type[104] = "Buffered Bulk Packet"
+
+
+
+$class_type = {}
+$class_type[0] = "Use info in interface"
+$class_type[1] = "Audio"
+$class_type[2] = "Communications and CDC-Control"
+$class_type[3] = "HID"
+$class_type[5] = "Physical"
+$class_type[6] = "Image"
+$class_type[7] = "Printer"
+$class_type[8] = "Storage"
+$class_type[9] = "Hub"
+$class_type[10] = "CDC-Data"
+$class_type[11] = "Smart Card"
+$class_type[13] = "Content Security"
+$class_type[14] = "Video"
+$class_type[15] = "Health Care"
+$class_type[0x10] = "Audio/Video"
+$class_type[0xfe] = "Application Specific"
+$class_type[0xff] = "Vendor Specific"
+
+
+$request_map = {}
+$request_map[0] = "get status"
+$request_map[1] = "clear feature"
+$request_map[3] = "set feature"
+$request_map[5] = "set address"
+$request_map[6] = "get descriptor"
+$request_map[7] = "set descriptor"
+$request_map[8] = "get config"
+$request_map[9] = "set config"
+$request_map[0x0a] = "get iface"
+$request_map[0x0b] = "set iface"
+
+
+$d_type = {}
+$d_type[1] = "device descriptor"
+$d_type[2] = "config descriptor"
+$d_type[3] = "string descriptor"
+$d_type[4] = "interface descriptor"
+$d_type[5] = "endpoint descriptor"
+$d_type[6] = "device qualifier descriptor"
+$d_type[7] = "other speed descriptor"
+$d_type[8] = "interface power descriptor"
+$d_type[9] = "OTG descriptor"
+$d_type[0x30] = "SS Endpoint descriptor"
+
+
+$r_type = {}
+$r_type[0] = "standard"
+$r_type[1 << 5] = "class"
+$r_type[2 << 5] = "vendor"
+
+def not_matches(chunk, word)
+
+  if chunk.size < word.size
+    puts "End of log."
+    exit(0)
+  end
+
+  (0...word.size).each do |i|
+    if chunk[i] != word[i]
+      return true
+    end
+  end
+
+  return false
+
+end
+
+def find_len(log, off)
+  trigger = "[End Cinch log]"
+
+  new_off = off
+
+  while not_matches(log.read(trigger.size), trigger)
+    new_off += 1
+    log.seek(new_off, IO::SEEK_SET)
+  end
+
+  return new_off - off
+end
+
+
+
+def parse(data, source, len)
+
+  h_type = $header_type[data.slice(0, 4).unpack("V").first]
+  h_len = data.slice(4, 4).unpack("V").first
+
+  return if source == "blue" 
+
+  if source == "blue"
+    print "Blue -> Red #{h_type}: "
+  else
+    print "Red -> Blue #{h_type}: "
+  end
+
+  if h_type == "Device Connect"
+    vendor_id = data.slice(20, 2).unpack("v").first 
+    product_id = data.slice(22, 2).unpack("v").first 
+    puts "id #{vendor_id.to_s(16)}:#{product_id.to_s(16)} (#{vendor_id}:#{product_id})"
+
+  elsif h_type == "Interface Info"
+    count = data.slice(16, 4).unpack("V").first
+    print "count #{count}\n"
+
+    (0...count).each do |i|
+      i_class = $class_type[data.slice(52 + i, 1).unpack("C").first]
+      i_sc = data.slice(84 + i, 1).unpack("C").first
+      i_proto = data.slice(116 + i, 1).unpack("C").first
+      puts "\tclass: #{i_class}, subclass: #{i_sc.to_s(16)}, proto: #{i_proto.to_s(16)}"
+    end
+
+  elsif h_type == "Control Packet"
+    request = $request_map[data[17].unpack("C").first]
+    requesttype = $r_type[data[18].unpack("C").first & 0x03 << 5]
+    d_type = $d_type[data.slice(20,2).unpack("v").first >> 8]
+
+    puts "[request: #{request}, request type: #{requesttype}, d_type: #{d_type}]"
+  else
+    puts ""
+  end
+
+end
+
+def process_entry(source, log, off, len)
+  log.seek(off)
+  parse(log.read(len), source, len)
+  return off + len
+end
+
+def process_first_entry(log, off, len)
+  if len < 16
+    puts "Error: length less than 16"
+    exit(-1)
+  end
+
+  log.seek(off)
+  log.seek(off+16)
+  return off + len
+end
+
+log = File.new("#{ARGV[0]}")
+
+trigger = "Machine]"
+off = 0
+first_packet_red = true
+first_packet_blue = true
+
+puts ""
+
+while !log.eof? do
+
+  while not_matches(log.read(trigger.size), trigger)
+    off += 1
+    log.seek(off, IO::SEEK_SET)
+  end
+
+  log.seek(off - 4, IO::SEEK_SET)
+  source = log.read(4)
+  off += 8
+
+  if source.include?("Blue")
+
+    len = find_len(log, off)
+
+    if first_packet_blue
+      off = process_first_entry(log, off, len)
+      first_packet_blue = false
+    else
+      off = process_entry("blue", log, off, len)
+    end
+
+  elsif source.include?("Red")
+
+    len = find_len(log, off)
+
+    if first_packet_red
+      off = process_first_entry(log, off, len)
+      first_packet_red = false
+    else
+      off = process_entry("red", log, off, len)
+    end
+
+  else
+    puts "Something went awry"
+    exit(-1)
+  end
+
+  log.seek(off, IO::SEEK_SET)
+end
