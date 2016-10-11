@@ -1,0 +1,13 @@
+pid=
+foreground=yes
+syslog=no
+[server]
+accept=9999
+CAfile=./keys/ca_cert.pem
+cert=./keys/server_cert.pem
+key=./keys/server_key.pem
+ciphers=ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:HIGH:!aNULL:!eNULL:!EXP:!LOW:!MEDIUM:!MD5
+client=no
+sslVersion=TLSv1.2
+connect=localhost:9997
+verify=2

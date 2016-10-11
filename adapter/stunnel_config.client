@@ -1,0 +1,13 @@
+pid=
+foreground=yes
+syslog=no
+[client]
+accept=localhost:9998
+CAfile=./keys/ca_cert.pem
+cert=./keys/client_cert.pem
+key=./keys/client_key.pem
+sslVersion=TLSv1.2
+ciphers=ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-RC4-SHA:ECDHE-RSA-AES256-SHA:HIGH:!aNULL:!eNULL:!EXP:!LOW:!MEDIUM:!MD5
+client=yes
+connect=REDMACHINE:9999
+verify=2
