@@ -1,5 +1,96 @@
-# cinch
+# Cinch
 A system for interposing on USB transfers and several security modules.
 See the paper [here] (https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_angel.pdf). 
+Our current prototype works with Linux KVM hypervisor (it supports any guest OS as we describe in the paper).
 
-Instructions on how to run cinch will be here soon.
+
+# Compiling Cinch
+Cinch is written in [Rust] (https://rust-lang.org) and compiles under the nightly compiler.
+To choose the nightly compiler simply run:
+```
+$ rustup install nightly
+$ rustup default nightly
+```
+
+To compile Cinch with debug symbols simply run: ``$ cargo build``. The resulting binary will be found in ``target/debug/cinch``.
+To compile Cinch with all optimizations run: ``$ cargo build --release``. The resulting binary will be found in ``target/release/cinch``.
+
+# Replicating the setup described in the paper
+
+Our setup requires a machine with an IOMMU running Linux with QEMU/KVM installed.  
+
+## Unbinding the USB host controller
+The first step is to unbind the host controller from the Linux machine so that we can redirect it to the red machine VM.
+
+Use the ``iommu_setup`` script found in ``scripts`` to unbind the machine's USB host controller.
+Modify the values at the beginning of the script with those belonging to your particular host controller.
+
+Then run: ``$ scripts/iommu_setup start``.
+
+## Creating and configuring the Red machine VM
+Create a new QEMU VM image and install Linux on it (we use Debian but any distribution works). Ensure tht the VM has a network 
+connection to the Linux hypervisor (we did this by setting up a [network bridge] (http://www.linux-kvm.org/page/Networking)).
+
+### Install usbredir on the Red machine
+Now that the VM has network support, install [usbredir] (https://github.com/SPICE/usbredir) version 0.7.1 on the Red machine VM. 
+
+In Debian, you can run: ``# apt-get install usbredir``. 
+In Arch, you can run ``# pacman -S usbredir``.
+
+Other distributions may have similar packages. Otherwise install it from source.
+
+### Blacklist.conf
+Depending on the Red machine OS that you install, its USB stack might be up to date and prevent many of the CVE exploits that
+we test in the paper. To ensure that this is not the case (and let Cinch do the heavy lifting) blacklist all the relevant drivers.
+
+In the red machine add the following to ``/etc/modprobe.d/blacklist.conf``
+
+```
+blacklist snd-usb-audio
+blacklist ati_remote2
+blacklist powermate
+blacklist gtco
+blacklist iowarrior
+blacklist visor
+blacklist mct_u232
+blacklist cypress_m8
+blacklist wacom
+blacklist digi_acceleport
+blacklist ims_pcu
+blacklist cdc_acm
+```
+This will prevent any of these drivers from loading on the Red VM.
+
+
+### Launch the Red VM with the USB host controller
+Launch the red machine and bind the host controller to it using the IOMMU.
+See the ``launch-red`` script found in ``scripts`` for the command line that we used to launch our red machine VM.
+
+## Creating and configuring the Blue machine VM
+For the blue machine VM you may use any OS supported by QEMU (e.g., Windows, \*BSD, Linux).
+The blue machine does not require any special configuration.
+
+### Launch the Blue VM
+To launch the blue machine use the ``launch-blue`` script found in ``scripts``. 
+It allows us to connect to the QEMU monitor using telnet which we leverage to hot-plug USB devices.
+
+## Connecting devices from the Red to the Blue VM
+First start Cinch with the appropriate configuration:
+
+``$ target/release/cinch`` or ``$ target/release/cinch -c config.json`` (see files in the configs folder for example
+configuration files).
+
+
+### Exporting devices through Cinch
+To export devices, first connect the device to the (physical) machine. The device should then appear on the Red VM.
+Use the ``device_setup`` found in ``scripts`` to export this device (this is done from the Linux/KVM hypervisor).
+
+```sh
+$ scripts/device_setup ls # shows ids of available devices
+$ scripts/device_setup export [ID] # unbinds device ID [ID] from Red VM and readies it for exporting to blue VM
+$ scripts/device_setup start # hotplugs the device to the Blue VM through Cinch
+```
+
+### Exporting devices without Cinch
+If you want to run this setup without Cinch, simply replace the ``CINCH_IP`` and ``CINCH_PORT`` to 
+the IP of the Red VM and the port to 8000 (which is hardcoded in the script's export function).
