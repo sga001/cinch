@@ -5,7 +5,7 @@ Our current prototype works with Linux KVM hypervisor (it supports any guest OS 
 
 
 # Compiling Cinch
-Cinch is written in [Rust] (https://rust-lang.org) and compiles under the nightly compiler.
+Cinch is written in [Rust] (https://www.rust-lang.org) and compiles under the nightly compiler.
 To choose the nightly compiler simply run:
 ```
 $ rustup install nightly
