@@ -75,10 +75,9 @@ To launch the blue machine use the ``launch-blue`` script found in ``scripts``.
 It allows us to connect to the QEMU monitor using telnet which we leverage to hot-plug USB devices.
 
 ## Connecting devices from the Red to the Blue VM
-First start Cinch with the appropriate configuration:
+First start Cinch with the default configuration (see next section for how to specify other configurations):
 
-``$ target/release/cinch`` or ``$ target/release/cinch -c config.json`` (see files in the configs folder for example
-configuration files).
+``$ target/release/cinch``  
 
 
 ### Exporting devices through Cinch
@@ -94,3 +93,7 @@ $ scripts/device_setup start # hotplugs the device to the Blue VM through Cinch
 ### Exporting devices without Cinch
 If you want to run this setup without Cinch, simply replace the ``CINCH_IP`` and ``CINCH_PORT`` to 
 the IP of the Red VM and the port to 8000 (which is hardcoded in the script's export function).
+
+# Configuring Cinch, Logging, and Signatures
+
+TODO
