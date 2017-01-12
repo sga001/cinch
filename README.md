@@ -77,7 +77,7 @@ It allows us to connect to the QEMU monitor using telnet which we leverage to ho
 ## Connecting devices from the Red to the Blue VM
 First start Cinch with the default configuration (see next section for how to specify other configurations):
 
-``$ target/release/cinch``  
+``$ target/release/cinch -c [CONFIG_FILE]``
 
 
 ### Exporting devices through Cinch
@@ -118,12 +118,13 @@ acts as a transparent proxy.
 **patch_active**: boolean flag stating whether to perform signature checks.
 
 **patches**: absolute path to the directory holding signatures (we call them patches in the source code).
-Each signature should be in a different JSON file.
+Each signature should be in a different file (see below for format). Cinch will automatically load all
+signatures in the given directory.
 
 **third_party_folder**: absolute path to the directory holding third party constraints. Each constraint
 should be in a different JSON file.
 
-Below is a sample config file.
+Below is a sample config file (JSON).
 
 ```json
 "red_addr": "192.168.1.100:8000",
@@ -140,5 +141,73 @@ The IP addresess correspond to a local network between the Red VM and Cinch.
 
 ## Signature format
 
-TODO
+Our current prototype can handle signatures for 3 types of packets: Bulk transfers, 
+initial connection, and control packets. Interrupt and Iso signatures are not yet implemented,
+but supporting them is relatively straightforward. See ``src/modules/patcher.rs``.
 
+Signatures consist of metadata and data that are used to match on packets.
+
+**p_type**: packet type. Available options are: control, connect, bulk.
+
+**vendor_id**: if ``p_type = connect``, this filters all devices from a particular vendor.
+
+**product_id**: if ``p_type = connect``, this filters all devices with a particular product id.
+
+**request**: corresponds to bRequest in the 
+  [USB setup packet](http://www.beyondlogic.org/usbnutshell/usb6.shtml#SetupPacket). 
+  This is used  when ``p_type = control`` in combination with ``requesttype`` to specify 
+  on which requests to perform the signature check.
+
+**requesttype**: corresponds to bmRequestType in the USB setup packet (see above).
+
+**patch_id**: a unique identifier for this signature/patch. Each signature in the signature folder
+must have a different identifier unless they belong to the same group (see below).
+
+**min_matches**: integer specifiying how many signatures (out of a set of signatures) must match before 
+the packet is filtered. For instance, if I have 10 signatures with the same ``patch_id``, these signatures
+form a group. Setting ``min_matches`` to 3 means that if any 3 signatures of the same group match 
+on a packet the packet will be dropped.
+
+**data**: hex-encoded payload string to match.
+
+
+Below are two sample signature files (JSON).
+
+```json
+{
+  "meta": {
+    "p_type": "bulk",
+    "vendor_id": 0,
+    "product_id": 0,
+    "request": 0,
+    "requesttype": 0,
+    "patch_id": 1,
+    "min_matches": 1
+  },
+
+  "data": "496e76616c6964205061727469746f6e207461626c65"
+}
+```
+
+The above signature matches any packet sent from the red machine that has the above data anywhere.
+
+```json
+{
+  "meta": {
+    "p_type": "connect",
+    "vendor_id": 1133,
+    "product_id": 49257,
+    "request": 0,
+    "requesttype": 0,
+    "patch_id": 1,
+    "min_matches": 1
+  },
+
+  "data": ""
+}
+```
+
+The above signature prevents a 
+[Logitech Corded Mouse M500](https://secure.logitech.com/en-us/product/corded-mouse-m500)
+from connecting to the blue machine. 1133 is Logitech's vendor id (0x046d). 49257 is the mouse's
+product id (0xc069). Both specified in decimal.
