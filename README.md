@@ -96,4 +96,49 @@ the IP of the Red VM and the port to 8000 (which is hardcoded in the script's ex
 
 # Configuring Cinch, Logging, and Signatures
 
+## Cinch Configuration Format
+
+Our current prototype has 8 options that can be specified.
+
+*red_addr*: the IP:Port of the red machine. 
+Cinch will connect to this address once the device has been 
+[hotplugged](https://github.com/sga001/cinch#connecting-devices-from-the-red-to-the-blue-vm).
+
+*cinch_addr*: The IP:Port of the Linux/KVM hypervisor instance running Cinch.
+
+*log*: boolean flag stating whether to log all traffic or not.
+
+*log_prefix*: path (and optional prefix name) for log files. For instance,
+if ``/home/cinch-user/logs/trace`` is specified, all traffic will be stored in a file
+called: ``trace-TIMESTAMP.log``. The timestamp has the format "day-month-year-hour-minute-second".
+
+*checks_active*: boolean flag stating whether to perform compliance checks. If false, Cinch simply
+acts as a transparent proxy.
+
+*patch_active*: boolean flag stating whether to perform signature checks.
+
+*patches*: absolute path to the directory holding signatures (we call them patches in the source code).
+Each signature should be in a different JSON file.
+
+*third_party_folder*: absolute path to the directory holding third party constraints. Each constraint
+should be in a different JSON file.
+
+Below is a sample config file.
+
+```json
+"red_addr": "192.168.1.100:8000",
+"cinch_addr: "192.168.1.7:5555",
+"log": true,
+"log_prefix": "/home/cinch-user/log/experiment1",
+"checks_active": true,
+"patch_active": true,
+"patches": "/home/cinch-user/cinch/signatures",
+"third_party_folder": "/home/cinch-user/cinch/third-party-checks"
+```
+
+The IP addresess correspond to a local network between the Red VM and Cinch.
+
+## Signature format
+
 TODO
+

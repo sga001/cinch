@@ -1,0 +1,10 @@
+{
+  "red_addr": "192.168.1.100:8000",
+  "cinch_addr": "192.168.1.7:5555",
+  "log": false,
+  "log_prefix": "logs/trace",
+  "checks_active": true,
+  "patch_active": false,
+  "patches": "",
+  "third_party_folder": "/home/cinch-login/third-party-checks"
+}
