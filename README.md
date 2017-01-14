@@ -1,4 +1,6 @@
-# Cinch
+# Cinch 
+[![Build Status](https://travis-ci.org/sga001/cinch.svg?branch=master)](https://travis-ci.org/sga001/cinch)
+
 A system for interposing on USB transfers and several security modules.
 See the paper [here] (https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_angel.pdf). 
 Our current prototype works with Linux KVM hypervisor (it supports any guest OS as we describe in the paper).
