@@ -2,12 +2,12 @@
 [![Build Status](https://travis-ci.org/sga001/cinch.svg?branch=master)](https://travis-ci.org/sga001/cinch)
 
 A system for interposing on USB transfers and several security modules.
-See the paper [here] (https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_angel.pdf). 
+See the paper [here](https://www.usenix.org/system/files/conference/usenixsecurity16/sec16_paper_angel.pdf). 
 Our current prototype works with Linux KVM hypervisor (it supports any guest OS as we describe in the paper).
 
 
 # Compiling Cinch
-Cinch is written in [Rust] (https://www.rust-lang.org) and compiles under the nightly compiler.
+Cinch is written in [Rust](https://www.rust-lang.org) and compiles under the nightly compiler.
 To choose the nightly compiler simply run:
 ```
 $ rustup install nightly
@@ -31,10 +31,10 @@ Then run: ``$ scripts/iommu_setup start``.
 
 ## Creating and configuring the Red machine VM
 Create a new QEMU VM image and install Linux on it (we use Debian but any distribution works). Ensure tht the VM has a network 
-connection to the Linux hypervisor (we did this by setting up a [network bridge] (http://www.linux-kvm.org/page/Networking)).
+connection to the Linux hypervisor (we did this by setting up a [network bridge](http://www.linux-kvm.org/page/Networking)).
 
 ### Install usbredir on the Red machine
-Now that the VM has network support, install [usbredir] (https://github.com/SPICE/usbredir) version 0.7.1 on the Red machine VM. 
+Now that the VM has network support, install [usbredir](https://github.com/SPICE/usbredir) version 0.7.1 on the Red machine VM. 
 
 In Debian, you can run: ``# apt-get install usbredir``. 
 In Arch, you can run ``# pacman -S usbredir``.
