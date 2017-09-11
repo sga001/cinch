@@ -1170,7 +1170,7 @@ impl Parser {
         }
     }
 
-    pub fn push_outputs<W: Write>(&mut self, mut output: &mut BufWriter<W>, requests: Vec<Request>) {
+    pub fn push_outputs<W: Write>(&mut self, output: &mut BufWriter<W>, requests: Vec<Request>) {
 
         // TODO: this might be inefficient. Revisit if there are performance issues.
 

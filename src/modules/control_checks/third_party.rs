@@ -167,7 +167,7 @@ impl Patcher {
                     }
 
                     if let Some(count) = constraint.count {
-                        let mut val = self.satisfied
+                        let val = self.satisfied
                             .entry((dev.id_vendor, dev.id_product, constraint.id))
                             .or_insert(count);
 
@@ -247,7 +247,7 @@ impl Patcher {
                     }
 
                     if let Some(count) = constraint.count {
-                        let mut val = self.satisfied
+                        let val = self.satisfied
                             .entry((dev.id_vendor, dev.id_product, constraint.id))
                             .or_insert(count);
 
